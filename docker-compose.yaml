@@ -1,7 +1,7 @@
 version: '3'
 services:
   pc-server:
-    build: ./pc-server
+    build: ./product-commission-server
     restart: on-failure
     hostname: pc-server
     env_file:
@@ -25,8 +25,8 @@ services:
     networks:
       - backend
 
-  frontend:
-    build: ./frontend
+  pc-web:
+    build: ./product-commission-webapp
     restart: on-failure
     ports:
       - "3000:3000"
