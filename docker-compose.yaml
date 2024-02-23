@@ -25,6 +25,14 @@ services:
     networks:
       - backend
 
+  frontend:
+    build: ./frontend
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
