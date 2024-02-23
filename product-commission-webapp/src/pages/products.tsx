@@ -8,15 +8,15 @@ import {
   useIndexResourceState,
   Text,
   ChoiceList,
-  Button,
-  RangeSlider,
-  Avatar,
+  Button, RangeSlider,
 } from '@shopify/polaris';
 import type {IndexFiltersProps, TabProps} from '@shopify/polaris';
 import {useState, useCallback, useEffect} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {getProducts, product, selectProducts} from "../redux/features/product.slice";
 import {AppDispatch} from "../redux/store";
+import styles from "../styles/product.module.css";
+import {getSortUptions, getTabs, sleep} from "../util/actions.utils";
 
 const Products = (): JSX.Element => {
   const dispatch: AppDispatch = useDispatch<AppDispatch>();
@@ -28,79 +28,36 @@ const Products = (): JSX.Element => {
   const products = useSelector(selectProducts);
 
 
-  const [productPrice, setProductPrice] = useState({});
-
   const [bulkPercent, setBulkPercent] = useState(0);
   const [bulkActionBtn, setBulkActionBtn] = useState(true);
-
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const [itemStrings, setItemStrings] = useState([
     'All'
   ]);
 
-  const deleteView = (index: number) => {
-    const newItemStrings = [...itemStrings];
-    newItemStrings.splice(index, 1);
-    setItemStrings(newItemStrings);
-    setSelected(0);
-  };
+  const [selected, setSelected] = useState(0);
 
-  const duplicateView = async (name: string) => {
-    setItemStrings([...itemStrings, name]);
-    setSelected(itemStrings.length);
+  const tabs: TabProps[] = getTabs(itemStrings, setItemStrings, setSelected);
+
+
+  const onHandleSave = async () => {
     await sleep(1);
     return true;
   };
 
-  const tabs: TabProps[] = itemStrings.map((item, index) => ({
-    content: item,
-    index,
-    onAction: () => {},
-    id: `${item}-${index}`,
-    isLocked: index === 0,
-    actions:
-      index === 0
-        ? []
-        : [
-          {
-            type: 'rename',
-            onAction: () => {},
-            onPrimaryAction: async (value: string): Promise<boolean> => {
-              const newItemsStrings = tabs.map((item, idx) => {
-                if (idx === index) {
-                  return value;
-                }
-                return item.content;
-              });
-              await sleep(1);
-              setItemStrings(newItemsStrings);
-              return true;
-            },
-          },
-          {
-            type: 'duplicate',
-            onPrimaryAction: async (value: string): Promise<boolean> => {
-              await sleep(1);
-              duplicateView(value);
-              return true;
-            },
-          },
-          {
-            type: 'edit',
-          },
-          {
-            type: 'delete',
-            onPrimaryAction: async () => {
-              await sleep(1);
-              deleteView(index);
-              return true;
-            },
-          },
-        ],
-  }));
 
-  const [selected, setSelected] = useState(0);
+
+  const [sortSelected, setSortSelected] = useState(['order asc']);
+
+  const {mode, setMode} = useSetIndexFiltersMode();
+  const onHandleCancel = () => {};
+
+  const handleChangeBulkPercent = useCallback((value: any) => {
+    setBulkPercent(value)
+    setBulkActionBtn(false)
+  }, []);
+
+
   const onCreateNewView = async (value: string) => {
     await sleep(500);
     setItemStrings([...itemStrings, value]);
@@ -108,42 +65,19 @@ const Products = (): JSX.Element => {
     return true;
   };
 
-  const sortOptions: IndexFiltersProps['sortOptions'] = [
-    {label: 'Order', value: 'order asc', directionLabel: 'Ascending'},
-    {label: 'Order', value: 'order desc', directionLabel: 'Descending'},
-    {label: 'Customer', value: 'customer asc', directionLabel: 'A-Z'},
-    {label: 'Customer', value: 'customer desc', directionLabel: 'Z-A'},
-    {label: 'Date', value: 'date asc', directionLabel: 'A-Z'},
-    {label: 'Date', value: 'date desc', directionLabel: 'Z-A'},
-    {label: 'Total', value: 'total asc', directionLabel: 'Ascending'},
-    {label: 'Total', value: 'total desc', directionLabel: 'Descending'},
-  ];
-  const [sortSelected, setSortSelected] = useState(['order asc']);
-
-  const {mode, setMode} = useSetIndexFiltersMode();
-  const onHandleCancel = () => {};
-
-  const handleChangeBulkPercent = useCallback((value: any) => setBulkPercent(value), []);
-
-  const onHandleSave = async () => {
-    await sleep(1);
-    return true;
-  };
-
-  const primaryAction: IndexFiltersProps['primaryAction'] =
-    selected === 0
-      ? {
-        type: 'save-as',
-        onAction: onCreateNewView,
-        disabled: false,
-        loading: false,
-      }
-      : {
-        type: 'save',
-        onAction: onHandleSave,
-        disabled: false,
-        loading: false,
-      };
+  const primaryAction: IndexFiltersProps['primaryAction'] = selected === 0
+    ? {
+      type: 'save-as',
+      onAction: onCreateNewView,
+      disabled: false,
+      loading: false,
+    }
+    : {
+      type: 'save',
+      onAction: onHandleSave,
+      disabled: false,
+      loading: false,
+    };
 
   const [accountStatus, setAccountStatus] = useState<string[] | undefined>(
     undefined,
@@ -179,7 +113,9 @@ const Products = (): JSX.Element => {
     [],
   );
   const handleTaggedWithRemove = useCallback(() => setTaggedWith(''), []);
+
   const handleQueryValueRemove = useCallback(() => setQueryValue(''), []);
+
   const handleFiltersClearAll = useCallback(() => {
     handleAccountStatusRemove();
     handleMoneySpentRemove();
@@ -191,6 +127,9 @@ const Products = (): JSX.Element => {
     handleQueryValueRemove,
     handleTaggedWithRemove,
   ]);
+
+
+  const sortOptions = getSortUptions();
 
   const filters = [
     {
@@ -281,9 +220,12 @@ const Products = (): JSX.Element => {
   const {selectedResources, allResourcesSelected, handleSelectionChange} = useIndexResourceState(products);
 
 
-  const handleOnChange = (e) => console.log(e);
+  // const handleCommissionPercentChange = useCallback(
+  //   (value) => setCommissionPercentChange(value),
+  //   []
+  // )
 
-  const rowMarkup = products?.map(({id, product_name, product_type, product_price}, index) => (
+  const rowMarkup = products?.map(({id, product_name, product_type, product_price, product_percent}, index) => (
       <IndexTable.Row
         id={id}
         key={id}
@@ -299,12 +241,12 @@ const Products = (): JSX.Element => {
         <IndexTable.Cell>{product_price}</IndexTable.Cell>
         <IndexTable.Cell>
           <TextField
-            label="product price"
+            label="commission percent"
             labelHidden={true}
             type="number"
             autoComplete="off"
-            value={product_price.toString()}
-            onChange={handleOnChange}
+            value={product_percent.toString()}
+            // onChange={handleCommissionPercentChange}
           />
         </IndexTable.Cell>
       </IndexTable.Row>
@@ -355,17 +297,19 @@ const Products = (): JSX.Element => {
         {rowMarkup}
       </IndexTable>
       {selectedResources.length > 0 && <Card>
-        <TextField
-          label="percent"
-          labelHidden={true}
-          type={"number"}
-          autoComplete="off"
-          value={bulkPercent.toString()}
-          onChange={(value, id) => handleChangeBulkPercent(value)}
-        />
-        <Button disabled={true}>Apply to selected products</Button>
-        <Button disabled={true}>Remove from plan</Button>
-        <Button disabled={true}>cancel</Button>
+        <div className={styles.bulkActionSection}>
+          <TextField
+              label="percent"
+              labelHidden={true}
+              type={"number"}
+              autoComplete="off"
+              value={bulkPercent.toString()}
+              onChange={(value, id) => handleChangeBulkPercent(value)}
+          />
+          <Button onClick={() => {}} disabled={bulkActionBtn}>Apply to selected products</Button>
+          <Button disabled={true}>Remove from plan</Button>
+          <Button disabled={bulkActionBtn}>cancel</Button>
+        </div>
       </Card>}
     </Card>
   );

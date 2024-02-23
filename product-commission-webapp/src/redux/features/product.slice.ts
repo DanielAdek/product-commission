@@ -1,4 +1,4 @@
-import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import axios from "axios";
 import {RootState} from "../store";
 import {API_ENDPOINT} from "../../api/endpoints";
@@ -15,6 +15,7 @@ type ProductState = {
   product_name: string;
   product_type: string;
   product_price: number;
+  product_percent: number;
 }
 const initialState: InitialState = {
   loading: false,

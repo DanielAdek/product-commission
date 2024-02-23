@@ -9,7 +9,7 @@ product-commission-server/coverage
 
 
 # GIT IGNORE FOR FRONTEND
-product-commission-webapp/.env
+product-commission-webapp/.env.example
 product-commission-webapp/node_modules/
 product-commission-webapp/.
 product-commission-webapp/yarn.lock
