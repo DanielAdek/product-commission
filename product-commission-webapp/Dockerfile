@@ -1,4 +1,4 @@
-# Use an official Node.js image as the base image
+# Use Node.js 14 as the base image
 FROM node:14-alpine as build
 
 # Set the working directory in the container
@@ -13,17 +13,11 @@ RUN npm install
 # Copy the rest of the application code to the working directory
 COPY . .
 
-# Build the frontend application
+# Build the Next.js application
 RUN npm run build
 
-# Use Nginx as a lightweight server to serve the static files
-FROM nginx:alpine
+# Expose port 3000 to the outside world
+EXPOSE 3000
 
-# Copy the built frontend files to the Nginx document root
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Expose port 80 to the outside world
-EXPOSE 80
-
-# Start Nginx server when the container starts
-CMD ["nginx", "-g", "daemon off;"]
+# Start the Next.js application when the container starts
+CMD ["npm", "start"]
